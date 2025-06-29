@@ -40,7 +40,10 @@ class AutoSaveManager {
     return btoa(JSON.stringify(data)).slice(0, 16);
   }
 
-  saveToBackup(data: BackupData['data'], onStatusChange: (status: AutoSaveStatus) => void): void {
+  saveToBackup(
+    data: BackupData['data'],
+    onStatusChange: (status: AutoSaveStatus) => void
+  ): void {
     if (!this.isClient) return;
 
     try {
@@ -67,7 +70,7 @@ class AutoSaveManager {
       if (!stored) return null;
 
       const backup: BackupData = JSON.parse(stored);
-      
+
       // Verify checksum
       const expectedChecksum = this.generateChecksum(backup.data);
       if (backup.checksum !== expectedChecksum) {
@@ -177,7 +180,7 @@ interface DataState {
 export const useDataStore = create<DataState>()(
   devtools(
     persist(
-      (set) => ({
+      set => ({
         // Initial state
         clients: [],
         workers: [],
@@ -379,7 +382,7 @@ export const useDataStore = create<DataState>()(
             'setUploadState'
           ),
 
-        setImportResult: result =>
+        setImportResult: result => {
           set(
             {
               lastImportResult: result,
@@ -390,7 +393,8 @@ export const useDataStore = create<DataState>()(
             },
             false,
             'setImportResult'
-          ),
+          );
+        },
 
         setHeaderMappings: mappings =>
           set({ headerMappings: mappings }, false, 'setHeaderMappings'),
@@ -404,12 +408,12 @@ export const useDataStore = create<DataState>()(
 
         markAsSaved: () =>
           set(
-            { 
-              isDataModified: false, 
+            {
+              isDataModified: false,
               lastSavedAt: new Date(),
               lastAutoSaveAt: new Date(),
               autoSaveStatus: 'saved',
-              autoSaveError: null
+              autoSaveError: null,
             },
             false,
             'markAsSaved'
@@ -429,29 +433,37 @@ export const useDataStore = create<DataState>()(
               lastSavedAt: currentState.lastSavedAt,
             };
 
-            autoSaveManager.saveToBackup(dataToSave, (status) => {
+            autoSaveManager.saveToBackup(dataToSave, status => {
               set({ autoSaveStatus: status }, false, 'autoSaveStatus');
               if (status === 'saved') {
-                set({
-                  lastAutoSaveAt: new Date(),
-                  autoSaveError: null,
-                }, false, 'autoSaveSuccess');
+                set(
+                  {
+                    lastAutoSaveAt: new Date(),
+                    autoSaveError: null,
+                  },
+                  false,
+                  'autoSaveSuccess'
+                );
               } else if (status === 'error') {
-                set({
-                  autoSaveError: 'Failed to auto-save data',
-                }, false, 'autoSaveError');
+                set(
+                  {
+                    autoSaveError: 'Failed to auto-save data',
+                  },
+                  false,
+                  'autoSaveError'
+                );
               }
             });
           });
         },
 
-        setAutoSaveEnabled: (enabled) =>
+        setAutoSaveEnabled: enabled =>
           set({ autoSaveEnabled: enabled }, false, 'setAutoSaveEnabled'),
 
-        setAutoSaveStatus: (status) =>
+        setAutoSaveStatus: status =>
           set({ autoSaveStatus: status }, false, 'setAutoSaveStatus'),
 
-        setAutoSaveError: (error) =>
+        setAutoSaveError: error =>
           set({ autoSaveError: error }, false, 'setAutoSaveError'),
 
         recoverFromBackup: () => {
@@ -462,17 +474,25 @@ export const useDataStore = create<DataState>()(
           const currentTimestamp = currentState.lastSavedAt?.getTime() || 0;
 
           // Use backup if it's newer or if current data is empty
-          if (backup.timestamp > currentTimestamp || 
-              (currentState.clients.length === 0 && 
-               currentState.workers.length === 0 && 
-               currentState.tasks.length === 0)) {
-            set({
-              clients: backup.data.clients,
-              workers: backup.data.workers,
-              tasks: backup.data.tasks,
-              lastSavedAt: backup.data.lastSavedAt ? new Date(backup.data.lastSavedAt) : null,
-              isDataModified: false,
-            }, false, 'recoverFromBackup');
+          if (
+            backup.timestamp > currentTimestamp ||
+            (currentState.clients.length === 0 &&
+              currentState.workers.length === 0 &&
+              currentState.tasks.length === 0)
+          ) {
+            set(
+              {
+                clients: backup.data.clients,
+                workers: backup.data.workers,
+                tasks: backup.data.tasks,
+                lastSavedAt: backup.data.lastSavedAt
+                  ? new Date(backup.data.lastSavedAt)
+                  : null,
+                isDataModified: false,
+              },
+              false,
+              'recoverFromBackup'
+            );
             return true;
           }
 
@@ -552,7 +572,6 @@ if (typeof window !== 'undefined') {
     const state = useDataStore.getState();
     const recovered = state.recoverFromBackup();
     if (recovered) {
-      console.log('Data recovered from backup');
     }
   };
 

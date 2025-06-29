@@ -10,8 +10,6 @@ if (typeof window === 'undefined') {
 const envSchema = z.object({
   // Google Gemini API (server-side only for security)
   GOOGLE_GEMINI_API_KEY: z.string().optional(),
-  // Client-side API key (deprecated - use server-side API routes instead)
-  NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY: z.string().optional(),
 
   // Application config
   NEXT_PUBLIC_APP_NAME: z.string().default('Data Alchemist'),
@@ -49,8 +47,7 @@ function validateEnv() {
 export const env = validateEnv();
 
 // Export individual config objects for easier imports
-const apiKey =
-  env.GOOGLE_GEMINI_API_KEY || env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY || null;
+const apiKey = env.GOOGLE_GEMINI_API_KEY || null;
 const isValidApiKey =
   apiKey && typeof apiKey === 'string' && apiKey.length > 10;
 
@@ -64,12 +61,7 @@ export const geminiConfig = {
   isEnabled: !!isValidApiKey,
 } as const;
 
-// Log Gemini configuration status
-if (geminiConfig.isEnabled) {
-  console.log('✅ Gemini API configured and enabled');
-} else {
-  console.log('⚠️ Gemini API not configured - using fallback mode');
-}
+// Gemini configuration status is available through geminiConfig.isEnabled
 
 export const appConfig = {
   name: env.NEXT_PUBLIC_APP_NAME,

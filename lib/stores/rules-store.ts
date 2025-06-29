@@ -60,12 +60,12 @@ export interface PrecedenceOverrideRule extends BaseRule {
   conditions: Record<string, any>;
 }
 
-export type BusinessRule = 
-  | CoRunRule 
-  | SlotRestrictionRule 
-  | LoadLimitRule 
-  | PhaseWindowRule 
-  | PatternMatchRule 
+export type BusinessRule =
+  | CoRunRule
+  | SlotRestrictionRule
+  | LoadLimitRule
+  | PhaseWindowRule
+  | PatternMatchRule
   | PrecedenceOverrideRule;
 
 // Prioritization types
@@ -77,8 +77,12 @@ export interface PriorityWeights {
   constraints: number;
 }
 
-export type PriorityMethod = 'sliders' | 'ranking' | 'ahp' | 'presets' | 'visualization';
-export type PresetProfile = 'maximizeFulfillment' | 'fairDistribution' | 'minimizeWorkload' | 'custom';
+export type PriorityMethod = 'sliders' | 'ranking' | 'ahp' | 'presets';
+export type PresetProfile =
+  | 'maximizeFulfillment'
+  | 'fairDistribution'
+  | 'minimizeWorkload'
+  | 'custom';
 
 // Rule conflicts and validation
 export interface RuleConflict {
@@ -111,7 +115,10 @@ class RulesAutoSaveManager {
     return btoa(JSON.stringify(data)).slice(0, 16);
   }
 
-  saveToBackup(data: BackupData['data'], onStatusChange: (status: AutoSaveStatus) => void): void {
+  saveToBackup(
+    data: BackupData['data'],
+    onStatusChange: (status: AutoSaveStatus) => void
+  ): void {
     if (!this.isClient) return;
 
     try {
@@ -139,7 +146,7 @@ class RulesAutoSaveManager {
       if (!stored) return null;
 
       const backup: BackupData = JSON.parse(stored);
-      
+
       // Verify backup integrity
       if (backup.version !== BACKUP_VERSION) {
         console.warn('Rules backup version mismatch, ignoring');
@@ -159,7 +166,10 @@ class RulesAutoSaveManager {
     }
   }
 
-  scheduleAutoSave(data: BackupData['data'], onStatusChange: (status: AutoSaveStatus) => void): void {
+  scheduleAutoSave(
+    data: BackupData['data'],
+    onStatusChange: (status: AutoSaveStatus) => void
+  ): void {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
@@ -185,48 +195,56 @@ const defaultPriorityWeights: PriorityWeights = {
 interface RulesState {
   // Core rule data
   rules: BusinessRule[];
-  
+
   // Prioritization system
   priorityWeights: PriorityWeights;
   priorityMethod: PriorityMethod;
   presetProfile: PresetProfile;
-  
+
   // State management
   isModified: boolean;
   lastSavedAt: Date | null;
   autoSaveStatus: AutoSaveStatus;
-  
+
   // Rule management actions
-  addRule: (rule: Omit<BusinessRule, 'id' | 'createdAt' | 'updatedAt'>) => string;
-  updateRule: (id: string, updates: Partial<Omit<BusinessRule, 'id' | 'createdAt'>>) => void;
+  addRule: (
+    rule: Omit<BusinessRule, 'id' | 'createdAt' | 'updatedAt'>
+  ) => string;
+  updateRule: (
+    id: string,
+    updates: Partial<Omit<BusinessRule, 'id' | 'createdAt'>>
+  ) => void;
   deleteRule: (id: string) => void;
   toggleRuleActive: (id: string) => void;
   duplicateRule: (id: string) => string;
-  
+
   // Prioritization actions
   setPriorityWeights: (weights: PriorityWeights) => void;
   setPriorityMethod: (method: PriorityMethod) => void;
   setPresetProfile: (profile: PresetProfile) => void;
   resetPriorityWeights: () => void;
-  
+
   // Auto-save actions
   setAutoSaveStatus: (status: AutoSaveStatus) => void;
   triggerAutoSave: () => void;
   loadFromBackup: () => boolean;
-  
+
   // Computed getters
   getRulesByType: (type: BusinessRule['type']) => BusinessRule[];
   getActiveRules: () => BusinessRule[];
   getRuleConflicts: () => RuleConflict[];
   getRule: (id: string) => BusinessRule | undefined;
-  
+
   // Validation
   validateRule: (rule: BusinessRule) => { isValid: boolean; errors: string[] };
   hasUnsavedChanges: () => boolean;
-  
+
   // Rule preview
-  previewRule: (rule: BusinessRule, data: { clients: Client[]; workers: Worker[]; tasks: Task[] }) => RulePreview;
-  
+  previewRule: (
+    rule: BusinessRule,
+    data: { clients: Client[]; workers: Worker[]; tasks: Task[] }
+  ) => RulePreview;
+
   // Export helpers
   exportRulesConfig: () => {
     rules: BusinessRule[];
@@ -239,9 +257,9 @@ interface RulesState {
 
 // Generate UUID v4
 function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -261,7 +279,7 @@ export const useRulesStore = create<RulesState>()(
         autoSaveStatus: 'idle',
 
         // Rule management actions
-        addRule: (ruleData) => {
+        addRule: ruleData => {
           const id = generateId();
           const now = new Date();
           const newRule = {
@@ -271,7 +289,7 @@ export const useRulesStore = create<RulesState>()(
             updatedAt: now,
           } as BusinessRule;
 
-          set((state) => ({
+          set(state => ({
             ...state,
             rules: [...state.rules, newRule],
             isModified: true,
@@ -283,31 +301,35 @@ export const useRulesStore = create<RulesState>()(
         },
 
         updateRule: (id, updates) => {
-          set((state) => ({
+          set(state => ({
             ...state,
             rules: state.rules.map(rule =>
               rule.id === id
-                ? { ...rule, ...updates, updatedAt: new Date() } as BusinessRule
+                ? ({
+                    ...rule,
+                    ...updates,
+                    updatedAt: new Date(),
+                  } as BusinessRule)
                 : rule
             ),
             isModified: true,
           }));
-          
+
           get().triggerAutoSave();
         },
 
-        deleteRule: (id) => {
-          set((state) => ({
+        deleteRule: id => {
+          set(state => ({
             ...state,
             rules: state.rules.filter(rule => rule.id !== id),
             isModified: true,
           }));
-          
+
           get().triggerAutoSave();
         },
 
-        toggleRuleActive: (id) => {
-          set((state) => ({
+        toggleRuleActive: id => {
+          set(state => ({
             ...state,
             rules: state.rules.map(rule =>
               rule.id === id
@@ -316,11 +338,11 @@ export const useRulesStore = create<RulesState>()(
             ),
             isModified: true,
           }));
-          
+
           get().triggerAutoSave();
         },
 
-        duplicateRule: (id) => {
+        duplicateRule: id => {
           const rule = get().getRule(id);
           if (!rule) return '';
 
@@ -334,7 +356,7 @@ export const useRulesStore = create<RulesState>()(
             updatedAt: now,
           };
 
-          set((state) => ({
+          set(state => ({
             ...state,
             rules: [...state.rules, duplicatedRule],
             isModified: true,
@@ -345,19 +367,23 @@ export const useRulesStore = create<RulesState>()(
         },
 
         // Prioritization actions
-        setPriorityWeights: (weights) => {
-          set({ priorityWeights: weights, isModified: true, presetProfile: 'custom' });
+        setPriorityWeights: weights => {
+          set({
+            priorityWeights: weights,
+            isModified: true,
+            presetProfile: 'custom',
+          });
           get().triggerAutoSave();
         },
 
-        setPriorityMethod: (method) => {
+        setPriorityMethod: method => {
           set({ priorityMethod: method, isModified: true });
           get().triggerAutoSave();
         },
 
-        setPresetProfile: (profile) => {
+        setPresetProfile: profile => {
           let weights = defaultPriorityWeights;
-          
+
           switch (profile) {
             case 'maximizeFulfillment':
               weights = {
@@ -393,7 +419,7 @@ export const useRulesStore = create<RulesState>()(
             priorityWeights: weights,
             isModified: true,
           });
-          
+
           get().triggerAutoSave();
         },
 
@@ -403,12 +429,12 @@ export const useRulesStore = create<RulesState>()(
             presetProfile: 'custom',
             isModified: true,
           });
-          
+
           get().triggerAutoSave();
         },
 
         // Auto-save actions
-        setAutoSaveStatus: (status) => set({ autoSaveStatus: status }),
+        setAutoSaveStatus: status => set({ autoSaveStatus: status }),
 
         triggerAutoSave: () => {
           const state = get();
@@ -441,7 +467,7 @@ export const useRulesStore = create<RulesState>()(
         },
 
         // Computed getters
-        getRulesByType: (type) => {
+        getRulesByType: type => {
           return get().rules.filter(rule => rule.type === type);
         },
 
@@ -449,7 +475,7 @@ export const useRulesStore = create<RulesState>()(
           return get().rules.filter(rule => rule.isActive);
         },
 
-        getRule: (id) => {
+        getRule: id => {
           return get().rules.find(rule => rule.id === id);
         },
 
@@ -458,9 +484,11 @@ export const useRulesStore = create<RulesState>()(
           const conflicts: RuleConflict[] = [];
 
           // Check for Co-run circular dependencies
-          const coRunRules = rules.filter(rule => rule.type === 'coRun') as CoRunRule[];
+          const coRunRules = rules.filter(
+            rule => rule.type === 'coRun'
+          ) as CoRunRule[];
           const taskConnections = new Map<string, Set<string>>();
-          
+
           coRunRules.forEach(rule => {
             rule.taskIds.forEach(taskId => {
               if (!taskConnections.has(taskId)) {
@@ -479,10 +507,12 @@ export const useRulesStore = create<RulesState>()(
             connections.forEach(connectedTaskId => {
               const reverseConnections = taskConnections.get(connectedTaskId);
               if (reverseConnections?.has(taskId)) {
-                const conflictingRules = coRunRules.filter(rule =>
-                  rule.taskIds.includes(taskId) && rule.taskIds.includes(connectedTaskId)
+                const conflictingRules = coRunRules.filter(
+                  rule =>
+                    rule.taskIds.includes(taskId) &&
+                    rule.taskIds.includes(connectedTaskId)
                 );
-                
+
                 if (conflictingRules.length > 0) {
                   conflicts.push({
                     id: generateId(),
@@ -497,9 +527,11 @@ export const useRulesStore = create<RulesState>()(
           });
 
           // Check for contradictory Load-limit rules
-          const loadLimitRules = rules.filter(rule => rule.type === 'loadLimit') as LoadLimitRule[];
+          const loadLimitRules = rules.filter(
+            rule => rule.type === 'loadLimit'
+          ) as LoadLimitRule[];
           const workerGroupLimits = new Map<string, LoadLimitRule[]>();
-          
+
           loadLimitRules.forEach(rule => {
             if (!workerGroupLimits.has(rule.workerGroup)) {
               workerGroupLimits.set(rule.workerGroup, []);
@@ -511,7 +543,7 @@ export const useRulesStore = create<RulesState>()(
             if (rules.length > 1) {
               const limits = rules.map(rule => rule.maxSlotsPerPhase);
               const hasConflict = new Set(limits).size > 1;
-              
+
               if (hasConflict) {
                 conflicts.push({
                   id: generateId(),
@@ -527,7 +559,7 @@ export const useRulesStore = create<RulesState>()(
           return conflicts;
         },
 
-        validateRule: (rule) => {
+        validateRule: rule => {
           const errors: string[] = [];
 
           // Basic validation
@@ -554,7 +586,9 @@ export const useRulesStore = create<RulesState>()(
               break;
             case 'phaseWindow':
               if (rule.allowedPhases.length === 0) {
-                errors.push('Phase window must specify at least one allowed phase');
+                errors.push(
+                  'Phase window must specify at least one allowed phase'
+                );
               }
               break;
             case 'patternMatch':
@@ -565,8 +599,14 @@ export const useRulesStore = create<RulesState>()(
               }
               break;
             case 'precedenceOverride':
-              if (rule.priority < 0) {
-                errors.push('Priority must be non-negative');
+              if (rule.priority < 1 || rule.priority > 10) {
+                errors.push('Priority must be between 1 and 10');
+              }
+              if (!rule.overrideType) {
+                errors.push('Override type is required');
+              }
+              if (!rule.targetRuleIds || rule.targetRuleIds.length === 0) {
+                errors.push('At least one target rule must be specified');
               }
               break;
           }
@@ -583,7 +623,13 @@ export const useRulesStore = create<RulesState>()(
 
         previewRule: (rule, data) => {
           const state = get();
-          return createRulePreview(rule, data.clients, data.workers, data.tasks, state.rules);
+          return createRulePreview(
+            rule,
+            data.clients,
+            data.workers,
+            data.tasks,
+            state.rules
+          );
         },
 
         exportRulesConfig: () => {

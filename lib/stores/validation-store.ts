@@ -37,6 +37,7 @@ interface ValidationState {
   // Computed getters
   getVisibleErrors: () => ValidationError[]
   getErrorsByEntity: (entityType: 'client' | 'worker' | 'task') => ValidationError[]
+  getCrossEntityErrors: () => ValidationError[]
   getErrorStats: () => { errors: number; warnings: number; info: number }
 }
 
@@ -172,6 +173,27 @@ export const useValidationStore = create<ValidationState>()(
                             entityType === 'worker' ? state.validationSummary.workers : 
                             state.validationSummary.tasks
         const allErrors = [...entityResult.errors, ...entityResult.warnings]
+        
+        return allErrors.filter(error => {
+          const isDismissed = state.dismissedErrors.has(error.id)
+          const isPinned = state.pinnedErrors.has(error.id)
+          
+          if (isPinned) return true
+          if (isDismissed) return false
+          
+          if (state.selectedErrorLevel !== 'all') {
+            return error.level === state.selectedErrorLevel
+          }
+          
+          return true
+        })
+      },
+      
+      getCrossEntityErrors: () => {
+        const state = get()
+        if (!state.validationSummary) return []
+        
+        const allErrors = [...state.validationSummary.crossEntity.errors, ...state.validationSummary.crossEntity.warnings]
         
         return allErrors.filter(error => {
           const isDismissed = state.dismissedErrors.has(error.id)

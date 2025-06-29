@@ -31,28 +31,16 @@ export class GeminiClient {
   private readonly isEnabled = geminiConfig.isEnabled
   
   constructor() {
-    // Add detailed debugging
-    console.log('🔧 GeminiClient initialization started');
-    console.log('🔧 Raw geminiConfig object:', geminiConfig);
-    console.log('🔧 GeminiClient initialization details:', {
-      hasApiKey: !!geminiConfig.apiKey,
-      apiKeyLength: geminiConfig.apiKey?.length || 0,
-      isEnabled: geminiConfig.isEnabled,
-      configIsEnabled: this.isEnabled,
-      apiKeyFirstTen: geminiConfig.apiKey ? `${geminiConfig.apiKey.substring(0, 10)}...` : 'none'
-    });
-    
     if (geminiConfig.apiKey) {
       try {
         const genAI = new GoogleGenerativeAI(geminiConfig.apiKey)
         this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
-        console.log('✅ Gemini model initialized successfully');
       } catch (error) {
-        console.error('❌ Failed to initialize Gemini client:', error)
+        console.error('Failed to initialize Gemini client:', error)
         this.model = null
       }
     } else {
-      console.warn('⚠️ No Gemini API key found - geminiConfig.apiKey is:', geminiConfig.apiKey);
+      console.warn('No Gemini API key found');
     }
   }
 

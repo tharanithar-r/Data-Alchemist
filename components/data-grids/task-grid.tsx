@@ -3,14 +3,16 @@
 import { CellValueChangedEvent, ColDef, GridReadyEvent } from '@ag-grid-community/core'
 import { AgGridReact } from '@ag-grid-community/react'
 import { Clock, Download, Plus, Upload } from 'lucide-react'
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ValidationDetailsPanel } from '@/components/validation/validation-details-panel'
 import { useDataStore } from '@/lib/stores/data-store'
 import { useValidationStore } from '@/lib/stores/validation-store'
-import { Task, TaskCategories } from '@/lib/types/entities'
+import { Task, TaskCategories, ValidationError } from '@/lib/types/entities'
+import { ErrorFixEngine } from '@/lib/validation/error-fixes'
 
 import '@ag-grid-community/styles/ag-grid.css'
 import '@ag-grid-community/styles/ag-theme-alpine.css'
@@ -21,10 +23,50 @@ interface TaskGridProps {
 
 export function TaskGrid({ className }: TaskGridProps) {
   const gridRef = useRef<AgGridReact>(null)
-  const { tasks, updateTask, addTask, deleteTask } = useDataStore()
+  const { tasks, updateTask, addTask, deleteTask, clients, workers, setTasks } = useDataStore()
   const { getErrorsByEntity } = useValidationStore()
+  const [showValidationDetails, setShowValidationDetails] = useState(false)
+  const [isFixingErrors, setIsFixingErrors] = useState(false)
   
   const taskErrors = getErrorsByEntity('task')
+
+  // Error fixing functions
+  const handleFixError = useCallback(async (error: ValidationError) => {
+    setIsFixingErrors(true);
+    try {
+      const suggestions = ErrorFixEngine.getFixSuggestions(error, { clients, workers, tasks });
+      const autoFixable = suggestions.find(s => s.canAutoFix && s.confidence === 'high');
+      
+      if (autoFixable) {
+        const result = await ErrorFixEngine.applyFix(error, autoFixable.id, { clients, workers, tasks });
+        if (result.success) {
+          setTasks(result.newData.tasks);
+        } else {
+          console.error('Failed to fix error:', result.message);
+        }
+      }
+    } catch (err) {
+      console.error('Error fixing failed:', err);
+    } finally {
+      setIsFixingErrors(false);
+    }
+  }, [clients, workers, tasks, setTasks]);
+
+  const handleBulkFix = useCallback(async (errors: ValidationError[]) => {
+    setIsFixingErrors(true);
+    try {
+      const result = await ErrorFixEngine.applyBulkFix(errors, { clients, workers, tasks });
+      if (result.success && result.newData) {
+        setTasks(result.newData.tasks);
+      } else {
+        console.error('Bulk fix failed:', result.message);
+      }
+    } catch (err) {
+      console.error('Bulk fix failed:', err);
+    } finally {
+      setIsFixingErrors(false);
+    }
+  }, [clients, workers, tasks, setTasks]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     if (confirm(`Are you sure you want to delete task ${taskId}?`)) {
@@ -287,6 +329,20 @@ export function TaskGrid({ className }: TaskGridProps) {
             <Badge variant="outline" className="text-xs">
               {taskErrors.filter(e => e.level === 'warning').length} warnings
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowValidationDetails(!showValidationDetails)}
+              className="text-xs"
+              disabled={isFixingErrors}
+            >
+              {showValidationDetails ? 'Hide Details' : 'View Details'}
+            </Button>
+            {isFixingErrors && (
+              <Badge variant="secondary" className="text-xs">
+                Fixing errors...
+              </Badge>
+            )}
           </div>
         )}
       </CardHeader>
@@ -320,6 +376,28 @@ export function TaskGrid({ className }: TaskGridProps) {
               <Plus className="h-4 w-4" />
               Add First Task
             </Button>
+          </div>
+        )}
+
+        {/* Validation Details Panel */}
+        {showValidationDetails && taskErrors.length > 0 && (
+          <div className="mt-6">
+            <ValidationDetailsPanel
+              onNavigateToError={(error) => {
+                // Navigate to the specific row/cell with the error
+                if (error.rowIndex !== undefined && gridRef.current?.api) {
+                  gridRef.current.api.ensureIndexVisible(error.rowIndex);
+                  // Highlight the specific row
+                  gridRef.current.api.flashCells({
+                    rowNodes: [gridRef.current.api.getRowNode(error.rowIndex.toString())!].filter(Boolean),
+                    flashDelay: 500,
+                    fadeDelay: 1000,
+                  });
+                }
+              }}
+              onFixError={handleFixError}
+              onBulkFix={handleBulkFix}
+            />
           </div>
         )}
       </CardContent>

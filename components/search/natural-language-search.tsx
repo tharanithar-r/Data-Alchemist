@@ -23,7 +23,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
-  NaturalLanguageSearchEngine,
   SearchResult,
   SearchQuery,
 } from '@/lib/ai/natural-language-search';
@@ -45,7 +44,7 @@ export function NaturalLanguageSearch({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchEngine] = useState(() => new NaturalLanguageSearchEngine());
+  // Remove direct search engine instantiation - use API route instead
   const [showFilters, setShowFilters] = useState(false);
   const [entityFilter, setEntityFilter] = useState<
     ('client' | 'worker' | 'task')[]
@@ -78,11 +77,24 @@ export function NaturalLanguageSearch({
           searchOptions.entityTypes = entityTypes;
         }
 
-        const searchResults = await searchEngine.search(
-          searchQuery,
-          searchData,
-          searchOptions
-        );
+        // Use API route for server-side search
+        const response = await fetch('/api/ai/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: searchQuery,
+            entities: searchData,
+            options: searchOptions,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Search API failed: ${response.statusText}`);
+        }
+
+        const searchResults = await response.json();
 
         setResults(searchResults);
         onResultsChange?.(searchResults);
@@ -105,7 +117,7 @@ export function NaturalLanguageSearch({
         setIsSearching(false);
       }
     },
-    [searchEngine, searchData, onResultsChange]
+    [searchData, onResultsChange]
   );
 
   // Debounce search execution
@@ -117,11 +129,27 @@ export function NaturalLanguageSearch({
     return () => clearTimeout(timeoutId);
   }, [query, entityFilter, executeSearch]);
 
-  // Get search suggestions
+  // Static search suggestions (since we moved to server-side API)
   const suggestions = useMemo(() => {
     if (query.length < 2) return [];
-    return searchEngine.getSuggestions(query);
-  }, [query, searchEngine]);
+    
+    const staticSuggestions = [
+      'high priority clients',
+      'clients with JavaScript tasks',
+      'workers with React skills',
+      'tasks requiring senior level',
+      'urgent tasks this week',
+      'workers available > 20 hours',
+      'clients in priority level 1',
+      'tasks with duration < 5 days',
+      'workers in engineering group',
+      'clients requesting mobile tasks'
+    ];
+    
+    return staticSuggestions.filter(suggestion => 
+      suggestion.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 5);
+  }, [query]);
 
   const handleQueryChange = (value: string) => {
     setQuery(value);

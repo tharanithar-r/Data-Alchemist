@@ -160,7 +160,6 @@ Return JSON with:
 }`;
 
     const response = await this.geminiClient.generateText(prompt);
-    console.log('AI Response:', response);
 
     try {
       const parsed = JSON.parse(response.content);

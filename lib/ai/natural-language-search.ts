@@ -88,22 +88,16 @@ export class NaturalLanguageSearchEngine {
     data: { clients: Client[]; workers: Worker[]; tasks: Task[] },
     options: Partial<SearchQuery> = {}
   ): Promise<SearchResult[]> {
-    const startTime = Date.now();
-
-    // Debug: Log the data structure being passed
-    console.log('🔍 Search called with data structure:', {
-      clients: data?.clients?.length || 'undefined',
-      workers: data?.workers?.length || 'undefined',
-      tasks: data?.tasks?.length || 'undefined',
-      dataKeys: Object.keys(data || {}),
-    });
+    // Data structure validation
+    if (!data || Object.keys(data).length === 0) {
+      return [];
+    }
 
     try {
       // Step 1: Parse the natural language query
       const parsedQuery = await this.parseQuery(query, options);
 
       // Step 2: Execute search with multi-tier fallback
-      console.log('📋 Parsed query:', parsedQuery);
       const results = await this.executeSearch(parsedQuery, data);
 
       // Step 3: Score and rank results
@@ -112,7 +106,6 @@ export class NaturalLanguageSearchEngine {
       // Step 4: Add to search history
       this.addToHistory(query, rankedResults);
 
-      console.log(`Search completed in ${Date.now() - startTime}ms`);
       return rankedResults.slice(0, this.config.maxResults);
     } catch (error) {
       console.error('Search failed, falling back to keyword search:', error);
@@ -230,8 +223,7 @@ IMPORTANT: Return only valid JSON without any markdown formatting or explanation
     const response = await this.geminiClient.generateText(prompt);
     const responseText = response.content;
     
-    // Debug: Log the raw response
-    console.log('🔧 Raw AI response:', responseText);
+    // Process AI response
     
     // Check if AI returned an error
     if (response.error) {
@@ -623,7 +615,6 @@ IMPORTANT: Return only valid JSON without any markdown formatting or explanation
   ): SearchResult[] {
     // This would require additional data about assignments
     // For now, return empty array as assignments are not part of the current schema
-    console.log('Assignment relationship search not implemented yet');
     return [];
   }
 
@@ -746,32 +737,37 @@ IMPORTANT: Return only valid JSON without any markdown formatting or explanation
     const matchReasons: string[] = [];
     const highlights: SearchHighlight[] = [];
 
-    // Keyword matching
+    // Enhanced keyword matching with partial matches and field-specific logic
     const searchableText = [
       worker.WorkerName,
       worker.WorkerID,
       worker.Skills,
       worker.WorkerGroup,
       worker.QualificationLevel.toString(),
+      String(worker.AvailableSlots || ''), // Include AvailableSlots for "available" searches
     ]
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
 
+
     parsedQuery.keywords.forEach(keyword => {
-      if (searchableText.includes(keyword.toLowerCase())) {
+      const keywordLower = keyword.toLowerCase();
+      
+      // Exact match
+      if (searchableText.includes(keywordLower)) {
         score += 10;
         matchReasons.push(`Matches keyword: ${keyword}`);
-
-        const index = searchableText.indexOf(keyword.toLowerCase());
-        if (index !== -1) {
-          highlights.push({
-            field: 'text',
-            text: keyword,
-            startIndex: index,
-            endIndex: index + keyword.length,
-          });
-        }
+      }
+      // Partial match for "available" -> "availableslots"
+      else if (keywordLower === 'available' && searchableText.includes('available')) {
+        score += 8;
+        matchReasons.push(`Partial match: ${keyword} in AvailableSlots`);
+      }
+      // Entity type match - if searching for "workers" and this is a worker
+      else if (['worker', 'workers', 'employee', 'employees'].includes(keywordLower)) {
+        score += 15;
+        matchReasons.push(`Entity type match: ${keyword}`);
       }
     });
 
@@ -916,8 +912,9 @@ IMPORTANT: Return only valid JSON without any markdown formatting or explanation
       .split(/\s+/)
       .filter(word => word.length > 2);
     const results: SearchResult[] = [];
+    
 
-    // Simple keyword matching across all fields
+    // Enhanced keyword matching with entity type detection
     const searchEntities = (
       entities: any[],
       entityType: 'client' | 'worker' | 'task'
@@ -927,14 +924,39 @@ IMPORTANT: Return only valid JSON without any markdown formatting or explanation
         return;
       }
 
+      // Check if the query is asking for this entity type specifically
+      const entityTypeKeywords = {
+        worker: ['worker', 'workers', 'employee', 'employees', 'staff', 'developer', 'developers'],
+        client: ['client', 'clients', 'customer', 'customers', 'company', 'companies'],
+        task: ['task', 'tasks', 'job', 'jobs', 'project', 'projects', 'work']
+      };
+      
+      const queryLower = query.toLowerCase();
+      const isEntityTypeQuery = entityTypeKeywords[entityType]?.some(keyword => 
+        queryLower.includes(keyword)
+      );
+
+
       entities.forEach(entity => {
         let score = 0;
         const matchReasons: string[] = [];
 
+        // If this is a general entity type query (like "available workers"), 
+        // give all entities of this type a base score
+        if (isEntityTypeQuery) {
+          score += 5;
+          matchReasons.push(`Entity type match: ${entityType}`);
+        }
+
         keywords.forEach(keyword => {
+          // Skip entity type keywords from detailed matching since we already handled them
+          if (entityTypeKeywords[entityType]?.includes(keyword)) {
+            return;
+          }
+
           Object.values(entity).forEach(value => {
             if (value && value.toString().toLowerCase().includes(keyword)) {
-              score += 1;
+              score += 2;
               matchReasons.push(`Keyword match: ${keyword}`);
             }
           });
@@ -945,7 +967,7 @@ IMPORTANT: Return only valid JSON without any markdown formatting or explanation
             entity,
             entityType,
             score,
-            confidence: Math.min(score / keywords.length, 1),
+            confidence: Math.min(score / Math.max(keywords.length, 1), 1),
             matchReasons,
             highlights: [],
           });

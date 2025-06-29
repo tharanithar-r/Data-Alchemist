@@ -44,3 +44,13 @@ next-env.d.ts.
 tasks
 
 CLAUDE.md
+
+rules
+
+.claude
+
+.vscode
+
+DataAlchemist_md.md
+
+

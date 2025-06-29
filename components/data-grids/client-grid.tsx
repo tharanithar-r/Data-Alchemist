@@ -16,6 +16,7 @@ import {
   useRef,
   forwardRef,
   useImperativeHandle,
+  useState,
 } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -29,11 +30,13 @@ import {
 } from '@/components/ui/card';
 import { useDataStore } from '@/lib/stores/data-store';
 import { useValidationStore } from '@/lib/stores/validation-store';
-import { Client } from '@/lib/types/entities';
+import { Client, ValidationError } from '@/lib/types/entities';
+import { ErrorFixEngine } from '@/lib/validation/error-fixes';
 
 // Import AG-Grid CSS
 import '@ag-grid-community/styles/ag-grid.css';
 import '@ag-grid-community/styles/ag-theme-alpine.css';
+import { ValidationDetailsPanel } from '@/components/validation/validation-details-panel';
 
 interface ClientGridProps {
   className?: string;
@@ -49,10 +52,50 @@ interface ClientGridRef {
 export const ClientGrid = forwardRef<ClientGridRef, ClientGridProps>(
   ({ className }, ref) => {
     const gridRef = useRef<AgGridReact<Client>>(null);
-    const { clients, updateClient, addClient, deleteClient } = useDataStore();
+    const { clients, updateClient, addClient, deleteClient, workers, tasks, setClients } = useDataStore();
     const { getErrorsByEntity } = useValidationStore();
+    const [showValidationDetails, setShowValidationDetails] = useState(false);
+    const [isFixingErrors, setIsFixingErrors] = useState(false);
 
     const clientErrors = getErrorsByEntity('client');
+
+    // Error fixing functions
+    const handleFixError = useCallback(async (error: ValidationError) => {
+      setIsFixingErrors(true);
+      try {
+        const suggestions = ErrorFixEngine.getFixSuggestions(error, { clients, workers, tasks });
+        const autoFixable = suggestions.find(s => s.canAutoFix && s.confidence === 'high');
+        
+        if (autoFixable) {
+          const result = await ErrorFixEngine.applyFix(error, autoFixable.id, { clients, workers, tasks });
+          if (result.success) {
+            setClients(result.newData.clients);
+          } else {
+            console.error('Failed to fix error:', result.message);
+          }
+        }
+      } catch (err) {
+        console.error('Error fixing failed:', err);
+      } finally {
+        setIsFixingErrors(false);
+      }
+    }, [clients, workers, tasks, setClients]);
+
+    const handleBulkFix = useCallback(async (errors: ValidationError[]) => {
+      setIsFixingErrors(true);
+      try {
+        const result = await ErrorFixEngine.applyBulkFix(errors, { clients, workers, tasks });
+        if (result.success && result.newData) {
+          setClients(result.newData.clients);
+        } else {
+          console.error('Bulk fix failed:', result.message);
+        }
+      } catch (err) {
+        console.error('Bulk fix failed:', err);
+      } finally {
+        setIsFixingErrors(false);
+      }
+    }, [clients, workers, tasks, setClients]);
 
     // Column definitions for client data
     const handleDeleteClient = useCallback(
@@ -297,6 +340,20 @@ export const ClientGrid = forwardRef<ClientGridRef, ClientGridProps>(
                 {clientErrors.filter(e => e.level === 'warning').length}{' '}
                 warnings
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowValidationDetails(!showValidationDetails)}
+                className="text-xs"
+                disabled={isFixingErrors}
+              >
+                {showValidationDetails ? 'Hide Details' : 'View Details'}
+              </Button>
+              {isFixingErrors && (
+                <Badge variant="secondary" className="text-xs">
+                  Fixing errors...
+                </Badge>
+              )}
             </div>
           )}
         </CardHeader>
@@ -336,6 +393,28 @@ export const ClientGrid = forwardRef<ClientGridRef, ClientGridProps>(
                 <Plus className="h-4 w-4" />
                 Add First Client
               </Button>
+            </div>
+          )}
+
+          {/* Validation Details Panel */}
+          {showValidationDetails && clientErrors.length > 0 && (
+            <div className="mt-6">
+              <ValidationDetailsPanel
+                onNavigateToError={(error) => {
+                  // Navigate to the specific row/cell with the error
+                  if (error.rowIndex !== undefined && gridRef.current?.api) {
+                    gridRef.current.api.ensureIndexVisible(error.rowIndex);
+                    // Highlight the specific row
+                    gridRef.current.api.flashCells({
+                      rowNodes: [gridRef.current.api.getRowNode(error.rowIndex.toString())!].filter(Boolean),
+                      flashDelay: 500,
+                      fadeDelay: 1000,
+                    });
+                  }
+                }}
+                onFixError={handleFixError}
+                onBulkFix={handleBulkFix}
+              />
             </div>
           )}
         </CardContent>

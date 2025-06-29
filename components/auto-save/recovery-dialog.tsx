@@ -64,10 +64,7 @@ export function RecoveryDialog() {
   }, [clients.length, workers.length, tasks.length]);
 
   const handleRecover = () => {
-    const recovered = recoverFromBackup();
-    if (recovered) {
-      console.log('Data successfully recovered from backup');
-    }
+    recoverFromBackup();
     setShowDialog(false);
   };
 

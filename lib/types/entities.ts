@@ -77,7 +77,7 @@ export interface ValidationError {
   message: string
   field?: string
   rowIndex?: number
-  entityType: 'client' | 'worker' | 'task'
+  entityType: 'client' | 'worker' | 'task' | 'cross-entity'
   ruleType: string
 }
 

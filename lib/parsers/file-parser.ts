@@ -16,47 +16,102 @@ export class FileParser {
   // Known column patterns for AI-assisted mapping
   private static readonly COLUMN_PATTERNS = {
     client: {
-      ClientID: ['client_id', 'clientid', 'id', 'client id', 'customer_id'],
+      ClientID: ['clientid', 'client_id', 'id', 'client id', 'customer_id'],
       ClientName: [
-        'client_name',
         'clientname',
+        'client_name',
         'name',
         'client name',
         'customer_name',
       ],
       PriorityLevel: [
-        'priority',
+        'prioritylevel',
         'priority_level',
+        'priority',
         'priority level',
         'importance',
       ],
-      RequestedTaskIDs: ['tasks', 'requested_tasks', 'task_ids', 'task ids'],
-      GroupTag: ['group', 'group_tag', 'team', 'department'],
-      AttributesJSON: ['attributes', 'metadata', 'extra_data', 'json_data'],
+      RequestedTaskIDs: [
+        'requestedtaskids',
+        'requested_task_ids',
+        'tasks',
+        'requested_tasks',
+        'task_ids',
+        'task ids',
+      ],
+      GroupTag: ['grouptag', 'group_tag', 'group', 'team', 'department'],
+      AttributesJSON: [
+        'attributesjson',
+        'attributes_json',
+        'attributes',
+        'metadata',
+        'extra_data',
+        'json_data',
+      ],
     },
     worker: {
-      WorkerID: ['worker_id', 'workerid', 'id', 'worker id', 'employee_id'],
+      WorkerID: ['workerid', 'worker_id', 'id', 'worker id', 'employee_id'],
       WorkerName: [
-        'worker_name',
         'workername',
+        'worker_name',
         'name',
         'worker name',
         'employee_name',
       ],
       Skills: ['skills', 'skill', 'capabilities', 'expertise'],
-      AvailableSlots: ['slots', 'available_slots', 'capacity', 'availability'],
-      MaxLoadPerPhase: ['max_load', 'load_limit', 'phase_capacity'],
-      WorkerGroup: ['group', 'team', 'department', 'worker_group'],
-      QualificationLevel: ['level', 'qualification', 'seniority', 'experience'],
+      AvailableSlots: [
+        'availableslots',
+        'available_slots',
+        'slots',
+        'capacity',
+        'availability',
+      ],
+      MaxLoadPerPhase: [
+        'maxloadperphase',
+        'max_load_per_phase',
+        'max_load',
+        'load_limit',
+        'phase_capacity',
+      ],
+      WorkerGroup: [
+        'workergroup',
+        'worker_group',
+        'group',
+        'team',
+        'department',
+      ],
+      QualificationLevel: [
+        'qualificationlevel',
+        'qualification_level',
+        'level',
+        'qualification',
+        'seniority',
+        'experience',
+      ],
     },
     task: {
-      TaskID: ['task_id', 'taskid', 'id', 'task id'],
-      TaskName: ['task_name', 'taskname', 'name', 'task name', 'title'],
+      TaskID: ['taskid', 'task_id', 'id', 'task id'],
+      TaskName: ['taskname', 'task_name', 'name', 'task name', 'title'],
       Category: ['category', 'type', 'task_type', 'classification'],
       Duration: ['duration', 'time', 'hours', 'effort'],
-      RequiredSkills: ['skills', 'required_skills', 'skill_requirements'],
-      PreferredPhases: ['phases', 'preferred_phases', 'timeline'],
-      MaxConcurrent: ['max_concurrent', 'concurrency', 'parallel_limit'],
+      RequiredSkills: [
+        'requiredskills',
+        'required_skills',
+        'skills',
+        'skill_requirements',
+      ],
+      PreferredPhases: [
+        'preferredphases',
+        'preferred_phases',
+        'phases',
+        'timeline',
+      ],
+      MaxConcurrent: [
+        'maxconcurrent',
+        'max_concurrent',
+        'concurrency',
+        'parallel_limit',
+      ],
     },
   };
 
@@ -76,11 +131,13 @@ export class FileParser {
           location: issue.line
             ? {
                 row: issue.line,
-                ...(issue.column?.toString() && { column: issue.column.toString() })
+                ...(issue.column?.toString() && {
+                  column: issue.column.toString(),
+                }),
               }
             : undefined,
         };
-        
+
         if (issue.suggestion) {
           errorOptions.suggestion = issue.suggestion;
         }
@@ -130,7 +187,7 @@ export class FileParser {
       const errorOptions: any = {
         recoverable: false,
       };
-      
+
       if (error instanceof Error && error.stack) {
         errorOptions.details = error.stack;
       }
@@ -271,6 +328,8 @@ export class FileParser {
     const patterns = this.COLUMN_PATTERNS[entityType];
     const mappings: ColumnMapping[] = [];
 
+    // Mapping columns for entity type
+
     Object.entries(patterns).forEach(([targetField, fieldPatterns]) => {
       let bestMatch: { header: string; confidence: number } | null = null;
 
@@ -299,6 +358,7 @@ export class FileParser {
           confidence: match.confidence,
           isConfirmed: match.confidence > 0.8,
         });
+      } else {
       }
     });
 
@@ -474,7 +534,32 @@ export class FileParser {
 
         return entity;
       })
-      .filter(entity => Object.keys(entity).length > 0);
+      .filter(entity => {
+        // Filter out empty entities
+        if (Object.keys(entity).length === 0) return false;
+
+        // For each entity type, check for essential fields
+        const entityObj = entity as any;
+
+        // Check if entity has at least one required field with meaningful data
+        const requiredFields = [
+          'ClientID',
+          'ClientName', // Client required fields
+          'WorkerID',
+          'WorkerName', // Worker required fields
+          'TaskID',
+          'TaskName', // Task required fields
+        ];
+
+        const hasRequiredField = requiredFields.some(field => {
+          const value = entityObj[field];
+          if (!value) return false;
+          const stringValue = String(value).trim();
+          return stringValue.length > 0 && stringValue !== '0';
+        });
+
+        return hasRequiredField;
+      });
   }
 
   /**
@@ -556,7 +641,13 @@ export class FileParser {
       const delimiter = formatInfo.delimiter || ',';
 
       // Convert CSV to worksheet format for unified processing
-      const lines = text.split('\n').filter(line => line.trim());
+      const lines = text
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .filter(
+          line => !line.split(delimiter).every(cell => cell.trim() === '')
+        );
 
       if (lines.length === 0) {
         errors.push(ParsingErrorHandler.createEmptyFileError(file.name));
