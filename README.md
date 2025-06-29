@@ -196,8 +196,6 @@ data-alchemist/
 │   ├── utils/                   # Utility functions
 │   └── validation/              # Validation engine
 ├── samples/                     # Sample CSV files
-├── tasks/                       # Development task breakdown
-└── CLAUDE.md                    # Development guidelines
 ```
 
 ## 🔧 Development
@@ -219,12 +217,6 @@ npm test             # Run test suite
 npm test:watch       # Run tests in watch mode
 ```
 
-### **Development Workflow**
-
-1. **Follow the task-based approach** outlined in `tasks/tasks-prd-data-alchemist.md`
-2. **Run type checking** before committing: `npm run type-check`
-3. **Use the validation engine** for testing data processing
-4. **Test with sample data** in the `samples/` directory
 
 ### **Key Development Guidelines**
 
@@ -302,22 +294,6 @@ Content-Type: application/json
 }
 ```
 
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Follow development guidelines** in `CLAUDE.md`
-4. **Commit changes**: `git commit -m 'Add amazing feature'`
-5. **Push to branch**: `git push origin feature/amazing-feature`
-6. **Open a Pull Request**
-
-### **Contribution Guidelines**
-
-- Follow TypeScript best practices
-- Maintain existing code style and patterns
-- Add appropriate validation for new features
-- Update documentation for significant changes
-- Test with sample data before submitting
 
 ## 🐛 Troubleshooting
 
@@ -347,18 +323,7 @@ Content-Type: application/json
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- **Next.js** team for the excellent framework
-- **Google** for Gemini AI capabilities
-- **AG-Grid** for powerful data grid functionality
-- **Shadcn/ui** for beautiful component library
-- **Vercel** for seamless deployment platform
-
----
-
-**Built with ❤️ for better data management**
 
 Transform your spreadsheet chaos into organized, validated datasets ready for production use.
 
-[📧 Report Issues](https://github.com/your-username/data-alchemist/issues) | [💡 Request Features](https://github.com/your-username/data-alchemist/discussions) | [📖 Documentation](https://your-docs-url.com)
+[📧 Report Issues](https://github.com/tharanithar-r/data-alchemist/issues) | [💡 Request Features](https://github.com/tharanithar-r/data-alchemist/discussions)
