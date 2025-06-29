@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(npx eslint:*)",
+      "Bash(python3:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(npx shadcn@latest add:*)"
+    ],
+    "deny": []
+  }
+}
