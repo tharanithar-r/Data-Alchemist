@@ -156,36 +156,36 @@ export function AIRuleAssistant() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="natural-language" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
+        <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-gradient-to-r from-purple-50 to-indigo-50">
           <TabsTrigger 
             value="suggestions" 
-            className="flex flex-col items-center gap-2 py-4 px-3 data-[state=active]:bg-blue-500/20 data-[state=active]:border-blue-500/30"
+            className="flex flex-col items-center gap-2 py-4 px-3 data-[state=active]:bg-blue-100 data-[state=active]:border-blue-200"
           >
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-blue-400" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
             </div>
             <span className="text-sm font-medium">Smart Suggestions</span>
-            <span className="text-xs text-muted-foreground">AI Recommendations</span>
+            <span className="text-xs text-gray-500">AI Recommendations</span>
           </TabsTrigger>
           <TabsTrigger
             value="natural-language"
-            className="flex flex-col items-center gap-2 py-4 px-3 data-[state=active]:bg-purple-500/20 data-[state=active]:border-purple-500/30"
+            className="flex flex-col items-center gap-2 py-4 px-3 data-[state=active]:bg-purple-100 data-[state=active]:border-purple-200"
           >
-            <div className="p-2 bg-purple-500/20 rounded-lg">
-              <MessageSquare className="h-5 w-5 text-purple-400" />
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <MessageSquare className="h-5 w-5 text-purple-600" />
             </div>
             <span className="text-sm font-medium">Natural Language</span>
-            <span className="text-xs text-muted-foreground">Describe in English</span>
+            <span className="text-xs text-gray-500">Describe in English</span>
           </TabsTrigger>
           <TabsTrigger 
             value="templates" 
-            className="flex flex-col items-center gap-2 py-4 px-3 data-[state=active]:bg-green-500/20 data-[state=active]:border-green-500/30"
+            className="flex flex-col items-center gap-2 py-4 px-3 data-[state=active]:bg-green-100 data-[state=active]:border-green-200"
           >
-            <div className="p-2 bg-green-500/20 rounded-lg">
-              <BookOpen className="h-5 w-5 text-green-400" />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <BookOpen className="h-5 w-5 text-green-600" />
             </div>
             <span className="text-sm font-medium">Rule Templates</span>
-            <span className="text-xs text-muted-foreground">Pre-built Patterns</span>
+            <span className="text-xs text-gray-500">Pre-built Patterns</span>
           </TabsTrigger>
         </TabsList>
 
@@ -251,7 +251,7 @@ export function AIRuleAssistant() {
                         onClick={() => setUserInput(example)}
                         className="text-left p-3 bg-gray-50 hover:bg-purple-50 rounded-lg text-sm text-gray-600 hover:text-purple-700 transition-colors border hover:border-purple-200"
                       >
-                        "{example}"
+                        &quot;{example}&quot;
                       </button>
                     ))}
                   </div>
@@ -538,29 +538,24 @@ export function AIRuleAssistant() {
               </Card>
 
               {/* Example Prompts */}
-              <Card className="border-amber-200 shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b">
-                  <CardTitle className="flex items-center gap-2 text-amber-900">
-                    <div className="p-2 bg-amber-100 rounded-lg">
-                      <Lightbulb className="h-4 w-4 text-amber-600" />
-                    </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Lightbulb className="h-4 w-4" />
                     Example Prompts
                   </CardTitle>
-                  <CardDescription className="text-amber-700 text-sm">
-                    Click any example to try it out
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="p-4">
+                <CardContent>
                   <Tabs
                     defaultValue={EXAMPLE_PROMPTS[0].category}
                     className="w-full"
                   >
-                    <TabsList className="grid w-full grid-cols-2 bg-amber-50">
+                    <TabsList className="grid w-full grid-cols-2">
                       {EXAMPLE_PROMPTS.map(category => (
                         <TabsTrigger
                           key={category.category}
                           value={category.category}
-                          className="text-xs data-[state=active]:bg-amber-100"
+                          className="text-xs"
                         >
                           {category.category.replace(' Rules', '')}
                         </TabsTrigger>
@@ -571,19 +566,19 @@ export function AIRuleAssistant() {
                       <TabsContent
                         key={category.category}
                         value={category.category}
-                        className="space-y-2 mt-4"
+                        className="space-y-2"
                       >
                         {category.examples.map((example, index) => (
                           <div
                             key={index}
-                            className="group p-3 bg-white border border-amber-200 rounded-lg cursor-pointer hover:bg-amber-50 hover:border-amber-300 transition-all duration-200 shadow-sm"
+                            className="p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors"
                             onClick={() => handleExampleSelect(example)}
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="text-xs text-gray-700 group-hover:text-amber-800 flex-1 leading-relaxed">
-                                "{example}"
+                            <div className="flex items-center justify-between">
+                              <div className="text-xs text-gray-700 flex-1">
+                                {example}
                               </div>
-                              <ArrowRight className="h-3 w-3 text-amber-400 group-hover:text-amber-600 mt-0.5 shrink-0" />
+                              <ArrowRight className="h-3 w-3 text-gray-400 ml-2" />
                             </div>
                           </div>
                         ))}
@@ -594,28 +589,20 @@ export function AIRuleAssistant() {
               </Card>
 
               {/* AI Tips */}
-              <Card className="border-emerald-200 shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b">
-                  <CardTitle className="flex items-center gap-2 text-emerald-900">
-                    <div className="p-2 bg-emerald-100 rounded-lg">
-                      <CheckCircle className="h-4 w-4 text-emerald-600" />
-                    </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">
                     Tips for Better Results
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 p-4">
-                  {[
-                    "Be specific about groups, tasks, and numbers",
-                    "Use entities that exist in your data",
-                    "Mention rule types explicitly when possible", 
-                    "Include context about phases (1-5) for timing rules",
-                    "Review and modify generated rules before adding"
-                  ].map((tip, index) => (
-                    <div key={index} className="flex items-start gap-2 text-sm text-emerald-700">
-                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 shrink-0"></div>
-                      <span>{tip}</span>
-                    </div>
-                  ))}
+                <CardContent className="space-y-2 text-xs text-gray-600">
+                  <div>• Be specific about groups, tasks, and numbers</div>
+                  <div>• Use entities that exist in your data</div>
+                  <div>• Mention rule types explicitly when possible</div>
+                  <div>
+                    • Include context about phases (1-5) for timing rules
+                  </div>
+                  <div>• Review and modify generated rules before adding</div>
                 </CardContent>
               </Card>
             </div>
@@ -623,33 +610,6 @@ export function AIRuleAssistant() {
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-6 mt-6">
-          {/* Templates Header */}
-          <div className="p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-xl border border-green-200">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <BookOpen className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-green-900">Rule Templates</h3>
-                <p className="text-green-700">Start with pre-built rule patterns and customize them for your needs</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span>12+ template categories</span>
-              </div>
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span>Guided parameter input</span>
-              </div>
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span>Instant rule preview</span>
-              </div>
-            </div>
-          </div>
-          
           <RuleTemplateWizard
             onRuleCreated={rule => {
               console.log('Template rule created:', rule);

@@ -88,10 +88,9 @@ export class NaturalLanguageSearchEngine {
     data: { clients: Client[]; workers: Worker[]; tasks: Task[] },
     options: Partial<SearchQuery> = {}
   ): Promise<SearchResult[]> {
-    // Data structure validation
-    if (!data || Object.keys(data).length === 0) {
-      return [];
-    }
+    // Track search performance
+    Date.now();
+
 
     try {
       // Step 1: Parse the natural language query
@@ -223,7 +222,6 @@ IMPORTANT: Return only valid JSON without any markdown formatting or explanation
     const response = await this.geminiClient.generateText(prompt);
     const responseText = response.content;
     
-    // Process AI response
     
     // Check if AI returned an error
     if (response.error) {

@@ -1,85 +1,34 @@
 'use client'
 
-import { AlertTriangle, Briefcase, CheckCircle, ClipboardList, Search, Upload, Users, Settings, TrendingUp, Download } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { AlertTriangle, Briefcase, CheckCircle, ClipboardList, Search, Upload, Users, Settings, TrendingUp } from 'lucide-react'
+import { useEffect } from 'react'
 
 import { AutoSaveStatus } from '@/components/auto-save/auto-save-status'
 import { RecoveryDialog } from '@/components/auto-save/recovery-dialog'
 import { ClientGrid } from '@/components/data-grids/client-grid'
 import { TaskGrid } from '@/components/data-grids/task-grid'
 import { WorkerGrid } from '@/components/data-grids/worker-grid'
-import { ExportManager } from '@/components/export/export-manager'
 import { PrioritizationManager } from '@/components/prioritization/prioritization-manager'
 import { RuleBuilder } from '@/components/rules/rule-builder'
 import { NaturalLanguageSearch } from '@/components/search/natural-language-search'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FileUpload } from '@/components/upload/file-upload'
-import { ValidationDetailsPanel } from '@/components/validation/validation-details-panel'
-import { useDataStore, useDataStoreSelectors } from '@/lib/stores/data-store'
+import { useDataStoreSelectors } from '@/lib/stores/data-store'
 import { useRulesStore } from '@/lib/stores/rules-store'
 import { useValidationStore } from '@/lib/stores/validation-store'
-import { ValidationError } from '@/lib/types/entities'
-import { ErrorFixEngine } from '@/lib/validation/error-fixes'
 import { ValidationEngine } from '@/lib/validation/validation-engine'
 
 export default function Home() {
   const { clients, workers, tasks, hasData } = useDataStoreSelectors()
-  const { setClients, setWorkers, setTasks } = useDataStore()
   const { 
     validationSummary, 
     setValidationSummary, 
     setIsValidating,
-    realtimeValidation,
-    getCrossEntityErrors 
+    realtimeValidation 
   } = useValidationStore()
   const { getActiveRules } = useRulesStore()
-  const [showCrossEntityDetails, setShowCrossEntityDetails] = useState(false)
-  const [isFixingCrossEntityErrors, setIsFixingCrossEntityErrors] = useState(false)
-
-  // Cross-entity error fixing functions
-  const handleFixCrossEntityError = useCallback(async (error: ValidationError) => {
-    setIsFixingCrossEntityErrors(true);
-    try {
-      const suggestions = ErrorFixEngine.getFixSuggestions(error, { clients, workers, tasks });
-      const autoFixable = suggestions.find(s => s.canAutoFix && s.confidence === 'high');
-      
-      if (autoFixable) {
-        const result = await ErrorFixEngine.applyFix(error, autoFixable.id, { clients, workers, tasks });
-        if (result.success) {
-          setClients(result.newData.clients);
-          setWorkers(result.newData.workers);
-          setTasks(result.newData.tasks);
-        } else {
-          console.error('Failed to fix cross-entity error:', result.message);
-        }
-      }
-    } catch (err) {
-      console.error('Cross-entity error fixing failed:', err);
-    } finally {
-      setIsFixingCrossEntityErrors(false);
-    }
-  }, [clients, workers, tasks, setClients, setWorkers, setTasks]);
-
-  const handleBulkFixCrossEntityErrors = useCallback(async (errors: ValidationError[]) => {
-    setIsFixingCrossEntityErrors(true);
-    try {
-      const result = await ErrorFixEngine.applyBulkFix(errors, { clients, workers, tasks });
-      if (result.success && result.newData) {
-        setClients(result.newData.clients);
-        setWorkers(result.newData.workers);
-        setTasks(result.newData.tasks);
-      } else {
-        console.error('Cross-entity bulk fix failed:', result.message);
-      }
-    } catch (err) {
-      console.error('Cross-entity bulk fix failed:', err);
-    } finally {
-      setIsFixingCrossEntityErrors(false);
-    }
-  }, [clients, workers, tasks, setClients, setWorkers, setTasks]);
 
   // Real-time validation effect
   useEffect(() => {
@@ -164,7 +113,7 @@ export default function Home() {
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="upload" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
               Upload
@@ -227,15 +176,6 @@ export default function Home() {
               <TrendingUp className="h-4 w-4" />
               Prioritization
             </TabsTrigger>
-            <TabsTrigger value="export" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export
-              {hasData && !hasErrors && (
-                <Badge variant="outline" className="ml-1 text-green-600">
-                  Ready
-                </Badge>
-              )}
-            </TabsTrigger>
           </TabsList>
 
           {/* Upload Tab */}
@@ -283,10 +223,8 @@ export default function Home() {
             {hasData ? (
               <NaturalLanguageSearch 
                 onResultSelect={(_result) => {
-                  // Could implement navigation to specific entity here
                 }}
                 onResultsChange={(_results) => {
-                  // Handle search results change
                 }}
               />
             ) : (
@@ -327,11 +265,6 @@ export default function Home() {
           {/* Prioritization Tab */}
           <TabsContent value="prioritization" className="space-y-6">
             <PrioritizationManager />
-          </TabsContent>
-
-          {/* Export Tab */}
-          <TabsContent value="export" className="space-y-6">
-            <ExportManager />
           </TabsContent>
 
           {/* Validation Tab */}
@@ -463,42 +396,10 @@ export default function Home() {
                                 ✓ Valid
                               </Badge>
                             )}
-                            {(validationSummary.crossEntity.errors.length > 0 || validationSummary.crossEntity.warnings.length > 0) && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowCrossEntityDetails(!showCrossEntityDetails)}
-                                className="text-xs"
-                                disabled={isFixingCrossEntityErrors}
-                              >
-                                {showCrossEntityDetails ? 'Hide Details' : 'View Details'}
-                              </Button>
-                            )}
-                            {isFixingCrossEntityErrors && (
-                              <Badge variant="secondary" className="text-xs">
-                                Fixing errors...
-                              </Badge>
-                            )}
                           </div>
                         </div>
                       </div>
                     </div>
-
-                    {/* Cross-Entity Validation Details Panel */}
-                    {showCrossEntityDetails && validationSummary && 
-                     (validationSummary.crossEntity.errors.length > 0 || validationSummary.crossEntity.warnings.length > 0) && (
-                      <div className="mt-6">
-                        <ValidationDetailsPanel
-                          specificErrors={getCrossEntityErrors()}
-                          onNavigateToError={(_error) => {
-                            // Cross-entity errors don't have specific row navigation
-                            // but we can provide general guidance
-                          }}
-                          onFixError={handleFixCrossEntityError}
-                          onBulkFix={handleBulkFixCrossEntityErrors}
-                        />
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8">

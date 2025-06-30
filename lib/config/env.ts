@@ -61,8 +61,6 @@ export const geminiConfig = {
   isEnabled: !!isValidApiKey,
 } as const;
 
-// Gemini configuration status is available through geminiConfig.isEnabled
-
 export const appConfig = {
   name: env.NEXT_PUBLIC_APP_NAME,
   version: env.NEXT_PUBLIC_APP_VERSION,

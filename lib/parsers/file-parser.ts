@@ -328,8 +328,6 @@ export class FileParser {
     const patterns = this.COLUMN_PATTERNS[entityType];
     const mappings: ColumnMapping[] = [];
 
-    // Mapping columns for entity type
-
     Object.entries(patterns).forEach(([targetField, fieldPatterns]) => {
       let bestMatch: { header: string; confidence: number } | null = null;
 
