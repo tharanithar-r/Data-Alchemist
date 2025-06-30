@@ -1,10 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 import { BusinessRule, CoRunRule, SlotRestrictionRule, LoadLimitRule, PhaseWindowRule, PatternMatchRule, PrecedenceOverrideRule } from '@/lib/stores/rules-store';
 
 import { calculateConfidenceScore, ConfidenceResult } from './confidence-scoring';
-
-const API_KEY = process.env.GOOGLE_GEMINI_API_KEY;
+import { GeminiClient } from './gemini-client';
 
 interface RuleGenerationResult {
   success: boolean;
@@ -274,25 +271,24 @@ export async function generateRuleFromNaturalLanguage(
   }
 ): Promise<RuleGenerationResult> {
   try {
-    if (!API_KEY) {
-      return {
-        success: false,
-        confidence: 0,
-        error: 'AI service not configured. Missing API key.'
-      };
-    }
-
+    const geminiClient = new GeminiClient();
+    
     // Quick pattern-based rule type identification (for future use)
     // const patternMatch = identifyRuleType(userInput);
     
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
     const prompt = createRuleGenerationPrompt(userInput, availableData);
     
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = await geminiClient.generateText(prompt);
+    
+    if (response.error) {
+      return {
+        success: false,
+        confidence: 0,
+        error: response.error
+      };
+    }
+    
+    const text = response.content;
 
     // Parse JSON response
     let aiResult;

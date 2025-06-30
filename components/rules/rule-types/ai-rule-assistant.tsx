@@ -28,10 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { ConfidenceResult } from '@/lib/ai/confidence-scoring';
-import {
-  generateRuleFromNaturalLanguage,
-  EXAMPLE_PROMPTS,
-} from '@/lib/ai/rule-generator';
+import { EXAMPLE_PROMPTS } from '@/lib/ai/rule-generator';
 import { useDataStore } from '@/lib/stores/data-store';
 import { useRulesStore, BusinessRule } from '@/lib/stores/rules-store';
 
@@ -87,10 +84,23 @@ export function AIRuleAssistant() {
     setGeneratedRule(null);
 
     try {
-      const result = await generateRuleFromNaturalLanguage(
-        userInput,
-        availableData
-      );
+      const response = await fetch('/api/ai/rule-generation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userInput,
+          availableData
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate rule');
+      }
+
+      const result = await response.json();
 
       if (result.success && result.rule) {
         setGeneratedRule({
@@ -113,6 +123,18 @@ export function AIRuleAssistant() {
   const handleAddRule = () => {
     if (generatedRule?.rule) {
       addRule(generatedRule.rule as BusinessRule);
+      setUserInput('');
+      setGeneratedRule(null);
+      setError(null);
+    }
+  };
+
+  // Handle adding and activating generated rule
+  const handleAddAndActivateRule = () => {
+    if (generatedRule?.rule) {
+      // Add rule with active status
+      const activeRule = { ...generatedRule.rule, isActive: true };
+      addRule(activeRule as BusinessRule);
       setUserInput('');
       setGeneratedRule(null);
       setError(null);
@@ -393,22 +415,44 @@ export function AIRuleAssistant() {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4 border-t border-green-200">
-                      <Button 
-                        onClick={handleAddRule} 
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                        size="lg"
-                      >
-                        <CheckCircle className="h-5 w-5 mr-2" />
-                        Add Rule to Collection
-                      </Button>
+                    <div className="space-y-3 pt-4 border-t border-green-200">
+                      <div className="mb-2 text-xs text-gray-600">
+                        Choose how to add this rule to your collection:
+                      </div>
+                      <div className="flex gap-3">
+                        <Button 
+                          onClick={handleAddAndActivateRule} 
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          size="lg"
+                        >
+                          <CheckCircle className="h-5 w-5 mr-2" />
+                          Add & Activate Rule
+                        </Button>
+                        <Button 
+                          onClick={handleAddRule} 
+                          variant="outline"
+                          className="flex-1 border-green-300 text-green-700 hover:bg-green-50"
+                          size="lg"
+                        >
+                          <Settings className="h-5 w-5 mr-2" />
+                          Add for Review
+                        </Button>
+                      </div>
+                      <div className="text-xs text-gray-500 grid grid-cols-2 gap-3">
+                        <div className="text-center">
+                          <span className="font-medium text-green-700">Active:</span> Rule takes effect immediately
+                        </div>
+                        <div className="text-center">
+                          <span className="font-medium text-gray-700">Review:</span> Add as inactive for manual activation
+                        </div>
+                      </div>
                       <Button
                         variant="outline"
                         onClick={() => setGeneratedRule(null)}
-                        className="flex-1 border-green-300 text-green-700 hover:bg-green-50"
-                        size="lg"
+                        className="w-full border-gray-300 text-gray-600 hover:bg-gray-50"
+                        size="sm"
                       >
-                        <ArrowRight className="h-5 w-5 mr-2" />
+                        <ArrowRight className="h-4 w-4 mr-2" />
                         Try Again
                       </Button>
                     </div>
