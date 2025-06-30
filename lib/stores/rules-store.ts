@@ -452,12 +452,19 @@ export const useRulesStore = create<RulesState>()(
         loadFromBackup: () => {
           const backup = autoSaveManager.loadFromBackup();
           if (backup) {
+            // Restore Date objects that may have been serialized as strings
+            const restoredRules = backup.rules.map(rule => ({
+              ...rule,
+              createdAt: rule.createdAt instanceof Date ? rule.createdAt : new Date(rule.createdAt),
+              updatedAt: rule.updatedAt instanceof Date ? rule.updatedAt : new Date(rule.updatedAt),
+            }));
+
             set({
-              rules: backup.rules,
+              rules: restoredRules,
               priorityWeights: backup.priorityWeights,
               priorityMethod: backup.priorityMethod,
               presetProfile: backup.presetProfile,
-              lastSavedAt: backup.lastSavedAt,
+              lastSavedAt: backup.lastSavedAt instanceof Date ? backup.lastSavedAt : (backup.lastSavedAt ? new Date(backup.lastSavedAt) : null),
               isModified: false,
               autoSaveStatus: 'saved',
             });
@@ -646,6 +653,19 @@ export const useRulesStore = create<RulesState>()(
       {
         name: 'data-alchemist-rules-store',
         version: 1,
+        onRehydrateStorage: () => (state) => {
+          if (state?.rules) {
+            // Restore Date objects that may have been serialized as strings
+            state.rules = state.rules.map(rule => ({
+              ...rule,
+              createdAt: rule.createdAt instanceof Date ? rule.createdAt : new Date(rule.createdAt),
+              updatedAt: rule.updatedAt instanceof Date ? rule.updatedAt : new Date(rule.updatedAt),
+            }));
+          }
+          if (state?.lastSavedAt && !(state.lastSavedAt instanceof Date)) {
+            state.lastSavedAt = new Date(state.lastSavedAt);
+          }
+        },
       }
     ),
     {

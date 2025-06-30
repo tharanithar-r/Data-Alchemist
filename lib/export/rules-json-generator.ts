@@ -108,8 +108,8 @@ function convertToProductionRule(rule: BusinessRule): ProductionRule {
     priority: 1, // Default priority, can be enhanced with rule ordering
     config: {},
     metadata: {
-      createdAt: rule.createdAt.toISOString(),
-      updatedAt: rule.updatedAt.toISOString(),
+      createdAt: rule.createdAt instanceof Date ? rule.createdAt.toISOString() : new Date(rule.createdAt).toISOString(),
+      updatedAt: rule.updatedAt instanceof Date ? rule.updatedAt.toISOString() : new Date(rule.updatedAt).toISOString(),
       source: rule.id.startsWith('ai-') ? 'ai' : 'user'
     }
   }
