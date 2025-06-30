@@ -1,55 +1,42 @@
-'use client';
+'use client'
 
-import {
-  Sliders,
-  List,
-  BarChart3,
-  BookOpen,
-  TrendingUp,
-  Activity,
-} from 'lucide-react';
+import { Sliders, List, BarChart3, BookOpen, TrendingUp, Activity } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRulesStore } from '@/lib/stores/rules-store';
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useRulesStore } from '@/lib/stores/rules-store'
 
-import { AHPMatrix } from './ahp-matrix';
-import { PresetProfiles } from './preset-profiles';
-import { PriorityWeightVisualization } from './priority-weight-visualization';
-import { RankingInterface } from './ranking-interface';
-import { WeightSliders } from './weight-sliders';
+import { AHPMatrix } from './ahp-matrix'
+import { PresetProfiles } from './preset-profiles'
+import { PriorityWeightVisualization } from './priority-weight-visualization'
+import { RankingInterface } from './ranking-interface'
+import { WeightSliders } from './weight-sliders'
+
 
 export function PrioritizationManager() {
-  const { priorityMethod, presetProfile, priorityWeights, rules } =
-    useRulesStore();
+  const { 
+    priorityMethod, 
+    presetProfile,
+    priorityWeights,
+    rules,
+    setPriorityMethod
+  } = useRulesStore()
 
-  const activeRules = rules.filter(r => r.isActive).length;
-  const totalWeight = Object.values(priorityWeights).reduce(
-    (sum, weight) => sum + weight,
-    0
-  );
+  const activeRules = rules.filter(r => r.isActive).length
+  const totalWeight = Object.values(priorityWeights).reduce((sum, weight) => sum + weight, 0)
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Prioritization & Weights
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900">Prioritization & Weights</h2>
           <p className="text-gray-600 mt-1">
-            Configure how the allocation system should balance different
-            criteria
+            Configure how the allocation system should balance different criteria
           </p>
         </div>
-
+        
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="flex items-center gap-1">
@@ -77,7 +64,7 @@ export function PrioritizationManager() {
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
@@ -89,7 +76,7 @@ export function PrioritizationManager() {
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
@@ -112,7 +99,7 @@ export function PrioritizationManager() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={priorityMethod} className="w-full">
+          <Tabs value={priorityMethod} onValueChange={(value) => setPriorityMethod(value as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="sliders" className="flex items-center gap-2">
                 <Sliders className="h-4 w-4" />
@@ -130,10 +117,7 @@ export function PrioritizationManager() {
                 <BookOpen className="h-4 w-4" />
                 Preset Profiles
               </TabsTrigger>
-              <TabsTrigger
-                value="visualization"
-                className="flex items-center gap-2"
-              >
+              <TabsTrigger value="visualization" className="flex items-center gap-2">
                 <Activity className="h-4 w-4" />
                 Visualization
               </TabsTrigger>
@@ -143,13 +127,10 @@ export function PrioritizationManager() {
             <TabsContent value="sliders" className="mt-6">
               <div className="space-y-4">
                 <div className="p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-medium text-blue-800 mb-2">
-                    Weight Sliders Method
-                  </h3>
+                  <h3 className="font-medium text-blue-800 mb-2">Weight Sliders Method</h3>
                   <p className="text-blue-700 text-sm">
-                    Use sliders to assign specific weight values (0-10) to each
-                    criterion. This method gives you precise control over the
-                    relative importance of each factor.
+                    Use sliders to assign specific weight values (0-10) to each criterion. 
+                    This method gives you precise control over the relative importance of each factor.
                   </p>
                 </div>
                 <WeightSliders />
@@ -160,13 +141,10 @@ export function PrioritizationManager() {
             <TabsContent value="ranking" className="mt-6">
               <div className="space-y-4">
                 <div className="p-4 bg-green-50 rounded-lg">
-                  <h3 className="font-medium text-green-800 mb-2">
-                    Drag & Drop Ranking Method
-                  </h3>
+                  <h3 className="font-medium text-green-800 mb-2">Drag & Drop Ranking Method</h3>
                   <p className="text-green-700 text-sm">
-                    Simply drag criteria to reorder them by importance. The
-                    system automatically converts your ranking to weight values
-                    (1st place = highest weight).
+                    Simply drag criteria to reorder them by importance. The system automatically 
+                    converts your ranking to weight values (1st place = highest weight).
                   </p>
                 </div>
                 <RankingInterface />
@@ -177,13 +155,10 @@ export function PrioritizationManager() {
             <TabsContent value="ahp" className="mt-6">
               <div className="space-y-4">
                 <div className="p-4 bg-purple-50 rounded-lg">
-                  <h3 className="font-medium text-purple-800 mb-2">
-                    Analytic Hierarchy Process (AHP)
-                  </h3>
+                  <h3 className="font-medium text-purple-800 mb-2">Analytic Hierarchy Process (AHP)</h3>
                   <p className="text-purple-700 text-sm">
-                    Use mathematical pairwise comparisons to derive priority
-                    weights. AHP provides the most rigorous and consistent
-                    method for complex decision-making.
+                    Use mathematical pairwise comparisons to derive priority weights. 
+                    AHP provides the most rigorous and consistent method for complex decision-making.
                   </p>
                 </div>
                 <AHPMatrix />
@@ -194,13 +169,10 @@ export function PrioritizationManager() {
             <TabsContent value="presets" className="mt-6">
               <div className="space-y-4">
                 <div className="p-4 bg-yellow-50 rounded-lg">
-                  <h3 className="font-medium text-yellow-800 mb-2">
-                    Preset Profiles
-                  </h3>
+                  <h3 className="font-medium text-yellow-800 mb-2">Preset Profiles</h3>
                   <p className="text-yellow-700 text-sm">
-                    Choose from expertly designed priority configurations for
-                    common organizational needs. Each profile represents a
-                    proven allocation strategy.
+                    Choose from expertly designed priority configurations for common organizational needs. 
+                    Each profile represents a proven allocation strategy.
                   </p>
                 </div>
                 <PresetProfiles />
@@ -211,13 +183,10 @@ export function PrioritizationManager() {
             <TabsContent value="visualization" className="mt-6">
               <div className="space-y-4">
                 <div className="p-4 bg-green-50 rounded-lg">
-                  <h3 className="font-medium text-green-800 mb-2">
-                    Priority Weight Visualization
-                  </h3>
+                  <h3 className="font-medium text-green-800 mb-2">Priority Weight Visualization</h3>
                   <p className="text-green-700 text-sm">
-                    See real-time visualizations of your weight configuration
-                    and preview how it affects allocation decisions. Understand
-                    the impact of your priority choices before applying them.
+                    See real-time visualizations of your weight configuration and preview how it affects allocation decisions. 
+                    Understand the impact of your priority choices before applying them.
                   </p>
                 </div>
                 <PriorityWeightVisualization />
@@ -249,7 +218,7 @@ export function PrioritizationManager() {
                 <li>• Best for: Detailed optimization</li>
               </ul>
             </div>
-
+            
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <List className="h-5 w-5 text-green-600" />
@@ -262,7 +231,7 @@ export function PrioritizationManager() {
                 <li>• Best for: Simple priority setting</li>
               </ul>
             </div>
-
+            
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="h-5 w-5 text-purple-600" />
@@ -275,7 +244,7 @@ export function PrioritizationManager() {
                 <li>• Best for: Complex decision-making</li>
               </ul>
             </div>
-
+            
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="h-5 w-5 text-yellow-600" />
@@ -288,7 +257,7 @@ export function PrioritizationManager() {
                 <li>• Best for: Proven approaches</li>
               </ul>
             </div>
-
+            
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <Activity className="h-5 w-5 text-green-600" />
@@ -305,5 +274,5 @@ export function PrioritizationManager() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

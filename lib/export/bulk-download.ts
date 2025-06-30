@@ -1,3 +1,8 @@
+/**
+ * Bulk Download utilities for creating ZIP packages of all export files
+ * Creates a single ZIP file containing CSV files and rules.json
+ */
+
 import JSZip from 'jszip';
 
 import {
